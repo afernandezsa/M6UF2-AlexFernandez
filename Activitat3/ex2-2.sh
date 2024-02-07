@@ -7,20 +7,20 @@ while [ "$valid" = false ]; do  #Si és fals, fa
 	read -p "Introdueix un nom d'usuari: " user #Llegeix un usuari
 
 	if id "$user" &>/dev/null; then  #Si l'usuari existeix al sistema, mostra amb echo informació de fitxers.
-    	echo "Info del usuari $user:"
-    	echo "-----------------------------------"
-    	grep "^$user:" /etc/passwd
-    	echo ""
-    	echo "Grup principal:"
-    	echo "---------------"
-    	grep "^$user:" /etc/group
-    	echo ""
-    	echo "Grup secundari:"
-    	echo "-------------------"
-    	id -Gn $user #Mostra grups secundàris del sistema
+	    	echo "Info del usuari $user:"
+	    	echo "-----------------------------------"
+	    	grep "^$user:" /etc/passwd
+	    	echo ""
+	    	echo "Grup principal:"
+	    	echo "---------------"
+	    	grep "^$user:" /etc/group
+	    	echo ""
+	    	echo "Grup secundari:"
+	    	echo "-------------------"
+	    	id -Gn $user #Mostra grups secundàris del sistema
 
-    	valid=true #Finalitza bucle
+    		valid=true #Finalitza bucle
 	else
-    	echo "L'usuari'$user' no existeix." #Sinó, avisa
+    		echo "L'usuari'$user' no existeix." #Sinó, avisa
 	fi
 done #Acaba bucle
