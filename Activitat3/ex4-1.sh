@@ -22,18 +22,18 @@ do
 	echo "La màquina ha escollit: $maquina"  #Mostra que escull la màquina a partir del random
 
 	if [ "$usuari" == "$maquina" ]; then  #Si la opció del usuari és la mateixa de la màquina serà empat
-    	echo "Empat entre tu i la maquina!"
+    		echo "Empat entre tu i la maquina!"
 	elif [ \( "$usuari" == "pedra" \) -a \( "$maquina" == "tisores" \) ] ||  #Série de elifs on comprovo qui guanya depenent de la lògica del joc obvi
-     	[ \( "$usuari" == "paper" \) -a \( "$maquina" == "pedra" \) ] ||     # "-a" comprovo que les dos son la opció escrita, és a dir son verdaderes.
-     	[ \( "$usuari" == "tisores" \) -a \( "$maquina" == "paper" \) ]; then  #"[ \( ... \) " Agrupa condicions dins de un elif en comptes de fer varis, a més la SHELL interpreta millor gràcies a [\
-    	echo "Guanya l'usuari!!!"
+	     	[ \( "$usuari" == "paper" \) -a \( "$maquina" == "pedra" \) ] ||     # "-a" comprovo que les dos son la opció escrita, és a dir son verdaderes.
+	     	[ \( "$usuari" == "tisores" \) -a \( "$maquina" == "paper" \) ]; then  #"[ \( ... \) " Agrupa condicions dins de un elif en comptes de fer varis, a més la SHELL interpreta millor gràcies a [\
+	    	echo "Guanya l'usuari!!!"
 	else
-    	echo "La màquina guanya :("  #Sinó es compleix cap de les anteriors, guanyarà màquina
+	    	echo "La màquina guanya :("  #Sinó es compleix cap de les anteriors, guanyarà màquina
 	fi  #Finalitza condicional
 
 	read -p "Vols seguir jugant? (si per a seguir): " seguir  #Pregunta si vol seguir amb una variable.
 	if [ "$seguir" != "$cont" ]; then  #Si aquesta no és igual al cont primer que era "si", canvio per complet la sortida de la variable cont, de manera que finalitza el while
-    	cont="no"
-  fi #Finalitza condicional
+    		cont="no"
+  	fi #Finalitza condicional
   
 done #Acabo bucle
