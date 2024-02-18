@@ -2,7 +2,7 @@
 
 until [ -d "$1" ]  #Fins que no sigui directori avisa i surt
 do
-  echo "Has d'introduïr un directori com a paràmetre!"
+        echo "Has d'introduïr un directori com a paràmetre!"
  	exit
 done
 #Fora del until, fem el que es verdader, ja que until només avisa si es fals.
