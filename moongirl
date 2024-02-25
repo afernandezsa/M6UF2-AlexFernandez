@@ -4,7 +4,6 @@ echo "Hauràs d'executar l'script sense sudo per a poder visualitzar en format H
 
 ipserv=""
 hostname=""
-usuari=""
 
 establir_connexio_ssh() {
 	while true; do
