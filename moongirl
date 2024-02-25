@@ -1,0 +1,130 @@
+
+#!/bin/bash
+
+echo "Hauràs d'executar l'script sense sudo per a poder visualitzar en format HTML!"
+
+establir_connexio_ssh() {
+	echo "Introdueix el nom de l'equip al que et vols connectar:"
+	read -p "> " hostname
+
+	echo "Introdueix la direcció IP del servidor:"
+	read -p "> " server_ip
+
+	echo "Establint connexió SSH a $hostname - $server_ip"
+	connssh="ssh -o PasswordAuthentication=no $hostname@$server_ip"
+	$connssh exit >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+    	echo "Connexió SSH establerta a $hostname - $server_ip"
+    	ipserv="$server_ip"
+    	instnmap
+    	return 0
+	else
+    	echo "No s'ha pogut establir la connexió SSH a $hostname - $server_ip. Torna-ho a intentar."
+    	return 1
+	fi
+}
+
+trampactrl_c() {
+	echo "Has fet un Ctrl + C. Sortint del script"
+	exit 1
+}
+
+trap trampactrl_c SIGINT
+
+instnmap() {
+	echo "nmap no està instal·lat al servidor remot, s'instal·larà"
+	echo "Introdueix la contrasenya de sudo per instal·lar nmap:"
+	read -s password
+	echo $password | $connssh 'sudo -S apt update && sudo -S apt install -y nmap'
+}
+
+while ! establir_connexio_ssh; do
+	:
+done
+
+
+usuari=$(whoami)
+
+if [ ! -f ~/.ssh/id_rsa ]; then
+	ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+fi
+
+ssh-copy-id $usuari@$ipserv
+
+connssh="ssh -o PasswordAuthentication=no $usuari@$ipserv"
+
+maquinari=$(cat << 'maquinari'
+echo "<h3>Informació de l'Hardware:</h3><br>"
+lscpu
+echo "------------------------------------------------------------------------"
+echo "<h3>Informació de l'emmagatzematge:</h3><br>"
+lsblk
+echo "------------------------------------------------------------------------"
+echo "<h3>Ús del disc:</h3><br>"
+df -h
+echo "------------------------------------------------------------------------"
+maquinari
+)
+
+nmap=$(cat << EOF
+nmap -p- -Pn $ipserv | grep -E '^[0-9]+\/(tcp|udp)' | awk '{print $1}'
+EOF
+)
+
+comprovar_ports() {
+	echo "Comprovant ports"
+	ports=$($connssh "$nmap")
+}
+
+comprovar_serveis() {
+	echo "Comprovant serveis oberts"
+	services=$($connssh 'systemctl list-units --type=service --state=active' | awk '{print $1}')
+}
+
+comprovar_intern() {
+	echo "Comprovant maquinari i programari del servidor (H/S)"
+	maquinari=$($connssh "$maquinari")
+}
+
+trap 'echo "Error en el script!" && exit 1' ERR
+
+comprovar_ports
+comprovar_serveis
+comprovar_intern
+
+cat << EOF > moongirl.html
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Serveis actius al servidor remot</title>
+</head>
+<body>
+	<h1>Ports oberts al remot:</h1>
+	<pre>
+	$ports
+	</pre>
+    
+	<h1>Serveis oberts al servidor remot:</h1>
+	<pre>
+	$services
+	</pre>
+    
+	<h1>Maquinari del remot (H/S)</h1>
+	<pre>
+	$maquinari
+	</pre>
+</body>
+</html>
+EOF
+
+scp moongirl.html $hostname@$ipserv:/home/$hostname/moongirl.html
+
+echo "Fitxer transferit al remot per capturar informació"
+
+scp $hostname@$ipserv:/home/$hostname/moongirl.html /home/$usuari/moongirl.html
+
+echo "Fitxer moongirl.html descarregat aquí, el pots trobar a la carpeta de l'usuari (/home/usuari/moongirl.html)"
+
+
+
+
