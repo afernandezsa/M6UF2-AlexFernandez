@@ -7,20 +7,20 @@ hostname=""
 
 establir_connexio_ssh() {
 	while true; do
-    	echo "Introdueix el nom de l'equip al que et vols connectar:"
-    	read -p "> " hostname
+    		echo "Introdueix el nom de l'equip al que et vols connectar:"
+    		read -p "> " hostname
 
-    	echo "Introdueix la direcció IP del servidor:"
-    	read -p "> " server_ip
+    		echo "Introdueix la direcció IP del servidor:"
+    		read -p "> " server_ip
 
-    	echo "Establint connexió SSH a $hostname - $server_ip"
+    		echo "Establint connexió SSH a $hostname - $server_ip"
    	 
-    	if timeout 10s ssh -o PasswordAuthentication=no $hostname@$server_ip exit >/dev/null 2>&1; then
-        	echo "Connexió SSH establerta a $hostname - $server_ip"
-        	ipserv="$server_ip"
-        	instnmap
+    		if timeout 10s ssh -o PasswordAuthentication=no $hostname@$server_ip exit >/dev/null 2>&1; then
+        		echo "Connexió SSH establerta a $hostname - $server_ip"
+        		ipserv="$server_ip"
+        		instnmap
 
-        	return 0
+        		return 0
     	else
         	echo "No s'ha pogut establir la connexió SSH a $hostname - $server_ip. Torna-ho a intentar."
     	fi
@@ -28,8 +28,8 @@ establir_connexio_ssh() {
 }
 
 trampactrl_c() {
-    echo "Has fet un Ctrl + C. Sortint del script"
-    exit 1
+	echo "Has fet un Ctrl + C. Sortint del script"
+	exit 1
 }
 
 trap trampactrl_c SIGINT
@@ -37,25 +37,25 @@ trap trampactrl_c SIGINT
 instnmap() {
 	echo "Comprovant si nmap ja està instal·lat"
 	if ! ssh $hostname@$ipserv 'command -v nmap' &>/dev/null; then
-    	echo "nmap no està instal·lat, s'instal·larà"
+    		echo "nmap no està instal·lat, s'instal·larà"
 
-    	echo "Introdueix la contrasenya del servidor per a la instal·lació de nmap:"
-    	read -s password
+    		echo "Introdueix la contrasenya del servidor per a la instal·lació de nmap:"
+    		read -s password
 
-    	ssh $hostname@$ipserv "echo $password | sudo -S apt update && echo $password | sudo -S apt install -y nmap"
+    		ssh $hostname@$ipserv "echo $password | sudo -S apt update && echo $password | sudo -S apt install -y nmap"
 	else
-    	echo "nmap ja està instal·lat!"
+    		echo "nmap ja està instal·lat!"
 	fi
 }
 
 while ! establir_connexio_ssh; do
-    :
+	:
 done
 
 usuari=$(whoami)
 
 if [ ! -f ~/.ssh/id_rsa ]; then
-    ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+	ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 fi
 
 ssh-copy-id $hostname@$ipserv
@@ -81,18 +81,18 @@ nmap_EOF
 )
 
 comprovar_ports() {
-    echo "Comprovant ports"
-    ports=$($connssh "$nmap")
+	echo "Comprovant ports"
+	ports=$($connssh "$nmap")
 }
 
 comprovar_serveis() {
-    echo "Comprovant serveis oberts"
-    services=$($connssh 'systemctl list-units --type=service --state=active' | awk '{print $1}')
+	echo "Comprovant serveis oberts"
+	services=$($connssh 'systemctl list-units --type=service --state=active' | awk '{print $1}')
 }
 
 comprovar_intern() {
-    echo "Comprovant maquinari i programari del servidor (H/S)"
-    maquinari=$($connssh "$maquinari")
+	echo "Comprovant maquinari i programari del servidor (H/S)"
+	maquinari=$($connssh "$maquinari")
 }
 
 trap 'echo "Error al script!" && exit 1' ERR
