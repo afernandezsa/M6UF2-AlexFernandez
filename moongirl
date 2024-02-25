@@ -15,7 +15,6 @@ establir_connexio_ssh() {
 
     	echo "Establint connexió SSH a $hostname - $server_ip"
    	 
-    	# Establecer un límite de tiempo de 10 segundos para la conexión SSH
     	if timeout 10s ssh -o PasswordAuthentication=no $hostname@$server_ip exit >/dev/null 2>&1; then
         	echo "Connexió SSH establerta a $hostname - $server_ip"
         	ipserv="$server_ip"
