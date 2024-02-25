@@ -1,60 +1,75 @@
-
 #!/bin/bash
 
 echo "Hauràs d'executar l'script sense sudo per a poder visualitzar en format HTML!"
 
+ipserv=""
+hostname=""
+usuari=""
+
 establir_connexio_ssh() {
-	echo "Introdueix el nom de l'equip al que et vols connectar:"
-	read -p "> " hostname
+	while true; do
+    	echo "Introdueix el nom de l'equip al que et vols connectar:"
+    	read -p "> " hostname
 
-	echo "Introdueix la direcció IP del servidor:"
-	read -p "> " server_ip
+    	echo "Introdueix la direcció IP del servidor:"
+    	read -p "> " server_ip
 
-	echo "Establint connexió SSH a $hostname - $server_ip"
-	connssh="ssh -o PasswordAuthentication=no $hostname@$server_ip"
-	$connssh exit >/dev/null 2>&1
-	if [ $? -eq 0 ]; then
-    	echo "Connexió SSH establerta a $hostname - $server_ip"
-    	ipserv="$server_ip"
-    	instnmap
-    	return 0
-	else
-    	echo "No s'ha pogut establir la connexió SSH a $hostname - $server_ip. Torna-ho a intentar."
-    	return 1
-	fi
+    	echo "Establint connexió SSH a $hostname - $server_ip"
+   	 
+    	# Establecer un límite de tiempo de 10 segundos para la conexión SSH
+    	if timeout 10s ssh -o PasswordAuthentication=no $hostname@$server_ip exit >/dev/null 2>&1; then
+        	echo "Connexió SSH establerta a $hostname - $server_ip"
+        	ipserv="$server_ip"
+        	instnmap
+
+        	return 0
+    	else
+        	echo "No s'ha pogut establir la connexió SSH a $hostname - $server_ip. Torna-ho a intentar."
+    	fi
+	done
 }
 
+
+
 trampactrl_c() {
-	echo "Has fet un Ctrl + C. Sortint del script"
-	exit 1
+    echo "Has fet un Ctrl + C. Sortint del script"
+    exit 1
 }
 
 trap trampactrl_c SIGINT
 
 instnmap() {
-	echo "nmap no està instal·lat al servidor remot, s'instal·larà"
-	echo "Introdueix la contrasenya de sudo per instal·lar nmap:"
-	read -s password
-	echo $password | $connssh 'sudo -S apt update && sudo -S apt install -y nmap'
+	echo "Comprovant si nmap ja està instal·lat"
+	if ! ssh $hostname@$ipserv 'command -v nmap' &>/dev/null; then
+    	echo "nmap no està instal·lat, s'instal·larà"
+
+    	echo "Introdueix la contrasenya del servidor per a la instal·lació de nmap:"
+    	read -s password
+
+    	ssh $hostname@$ipserv "echo $password | sudo -S apt update && echo $password | sudo -S apt install -y nmap"
+	else
+    	echo "nmap ja està instal·lat!"
+	fi
 }
 
 while ! establir_connexio_ssh; do
-	:
+    :
 done
 
 
 usuari=$(whoami)
 
 if [ ! -f ~/.ssh/id_rsa ]; then
-	ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+    ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 fi
 
-ssh-copy-id $usuari@$ipserv
+ssh-copy-id $hostname@$ipserv
 
-connssh="ssh -o PasswordAuthentication=no $usuari@$ipserv"
+connssh="ssh -o PasswordAuthentication=no $hostname@$ipserv"
 
-maquinari=$(cat << 'maquinari'
-echo "<h3>Informació de l'Hardware:</h3><br>"
+
+maquinari=$(cat << maquinari_EOF
+echo "<h3>Informació del Hardware:</h3><br>"
 lscpu
 echo "------------------------------------------------------------------------"
 echo "<h3>Informació de l'emmagatzematge:</h3><br>"
@@ -63,34 +78,35 @@ echo "------------------------------------------------------------------------"
 echo "<h3>Ús del disc:</h3><br>"
 df -h
 echo "------------------------------------------------------------------------"
-maquinari
+maquinari_EOF
 )
 
-nmap=$(cat << EOF
-nmap -p- -Pn $ipserv | grep -E '^[0-9]+\/(tcp|udp)' | awk '{print $1}'
-EOF
+nmap=$(cat << nmap_EOF
+nmap -p- -Pn $ipserv | grep -E '^[0-9]+\/(tcp|udp)' | awk '{print \$1}'
+nmap_EOF
 )
 
 comprovar_ports() {
-	echo "Comprovant ports"
-	ports=$($connssh "$nmap")
+    echo "Comprovant ports"
+    ports=$($connssh "$nmap")
 }
 
 comprovar_serveis() {
-	echo "Comprovant serveis oberts"
-	services=$($connssh 'systemctl list-units --type=service --state=active' | awk '{print $1}')
+    echo "Comprovant serveis oberts"
+    services=$($connssh 'systemctl list-units --type=service --state=active' | awk '{print $1}')
 }
 
 comprovar_intern() {
-	echo "Comprovant maquinari i programari del servidor (H/S)"
-	maquinari=$($connssh "$maquinari")
+    echo "Comprovant maquinari i programari del servidor (H/S)"
+    maquinari=$($connssh "$maquinari")
 }
 
-trap 'echo "Error en el script!" && exit 1' ERR
+trap 'echo "Error al script!" && exit 1' ERR
 
 comprovar_ports
 comprovar_serveis
 comprovar_intern
+
 
 cat << EOF > moongirl.html
 <!DOCTYPE html>
@@ -124,6 +140,10 @@ echo "Fitxer transferit al remot per capturar informació"
 scp $hostname@$ipserv:/home/$hostname/moongirl.html /home/$usuari/moongirl.html
 
 echo "Fitxer moongirl.html descarregat aquí, el pots trobar a la carpeta de l'usuari (/home/usuari/moongirl.html)"
+
+
+
+
 
 
 
