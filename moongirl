@@ -29,8 +29,6 @@ establir_connexio_ssh() {
 	done
 }
 
-
-
 trampactrl_c() {
     echo "Has fet un Ctrl + C. Sortint del script"
     exit 1
@@ -56,7 +54,6 @@ while ! establir_connexio_ssh; do
     :
 done
 
-
 usuari=$(whoami)
 
 if [ ! -f ~/.ssh/id_rsa ]; then
@@ -66,7 +63,6 @@ fi
 ssh-copy-id $hostname@$ipserv
 
 connssh="ssh -o PasswordAuthentication=no $hostname@$ipserv"
-
 
 maquinari=$(cat << maquinari_EOF
 echo "<h3>Informació del Hardware:</h3><br>"
@@ -107,7 +103,6 @@ comprovar_ports
 comprovar_serveis
 comprovar_intern
 
-
 cat << EOF > moongirl.html
 <!DOCTYPE html>
 <html>
@@ -140,11 +135,3 @@ echo "Fitxer transferit al remot per capturar informació"
 scp $hostname@$ipserv:/home/$hostname/moongirl.html /home/$usuari/moongirl.html
 
 echo "Fitxer moongirl.html descarregat aquí, el pots trobar a la carpeta de l'usuari (/home/usuari/moongirl.html)"
-
-
-
-
-
-
-
-
