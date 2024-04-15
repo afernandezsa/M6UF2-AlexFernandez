@@ -15,15 +15,13 @@ establir_connexio_ssh() {
 
     	echo "Establint connexió SSH a $hostname - $ipserv"
 
-    	# Generar par de claves SSH si no existe
+    	# Genero claus ssh
     	if [ ! -f ~/.ssh/id_rsa ]; then
         	ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
     	fi
 
-    	# Copiar clave pública al servidor remoto
     	ssh-copy-id $hostname@$ipserv >/dev/null 2>&1
 
-    	# Verificar la conexión SSH
     	if ssh $hostname@$ipserv exit >/dev/null 2>&1; then
         	echo "Connexió SSH establerta a $hostname - $ipserv"
         	instnmap
