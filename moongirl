@@ -7,22 +7,29 @@ hostname=""
 
 establir_connexio_ssh() {
 	while true; do
-    		echo "Introdueix el nom de l'equip al que et vols connectar:"
-    		read -p "> " hostname
+    	echo "Introdueix el nom de l'equip al que et vols connectar:"
+    	read -p "> " hostname
 
-    		echo "Introdueix la direcció IP del servidor:"
-    		read -p "> " server_ip
+    	echo "Introdueix la direcció IP del servidor:"
+    	read -p "> " ipserv
 
-    		echo "Establint connexió SSH a $hostname - $server_ip"
-   	 
-    		if timeout 10s ssh -o PasswordAuthentication=no $hostname@$server_ip exit >/dev/null 2>&1; then
-        		echo "Connexió SSH establerta a $hostname - $server_ip"
-        		ipserv="$server_ip"
-        		instnmap
+    	echo "Establint connexió SSH a $hostname - $ipserv"
 
-        		return 0
+    	# Generar par de claves SSH si no existe
+    	if [ ! -f ~/.ssh/id_rsa ]; then
+        	ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+    	fi
+
+    	# Copiar clave pública al servidor remoto
+    	ssh-copy-id $hostname@$ipserv >/dev/null 2>&1
+
+    	# Verificar la conexión SSH
+    	if ssh $hostname@$ipserv exit >/dev/null 2>&1; then
+        	echo "Connexió SSH establerta a $hostname - $ipserv"
+        	instnmap
+        	return 0
     	else
-        	echo "No s'ha pogut establir la connexió SSH a $hostname - $server_ip. Torna-ho a intentar."
+        	echo "No s'ha pogut establir la connexió SSH a $hostname - $ipserv. Torna-ho a intentar."
     	fi
 	done
 }
@@ -37,14 +44,14 @@ trap trampactrl_c SIGINT
 instnmap() {
 	echo "Comprovant si nmap ja està instal·lat"
 	if ! ssh $hostname@$ipserv 'command -v nmap' &>/dev/null; then
-    		echo "nmap no està instal·lat, s'instal·larà"
+    	echo "nmap no està instal·lat, s'instal·larà"
 
-    		echo "Introdueix la contrasenya del servidor per a la instal·lació de nmap:"
-    		read -s password
+    	echo "Introdueix la contrasenya del servidor per a la instal·lació de nmap:"
+    	read -s password
 
-    		ssh $hostname@$ipserv "echo $password | sudo -S apt update && echo $password | sudo -S apt install -y nmap"
+    	ssh $hostname@$ipserv "echo $password | sudo -S apt update && echo $password | sudo -S apt install -y nmap"
 	else
-    		echo "nmap ja està instal·lat!"
+    	echo "nmap ja està instal·lat!"
 	fi
 }
 
@@ -53,12 +60,6 @@ while ! establir_connexio_ssh; do
 done
 
 usuari=$(whoami)
-
-if [ ! -f ~/.ssh/id_rsa ]; then
-	ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
-fi
-
-ssh-copy-id $hostname@$ipserv
 
 connssh="ssh -o PasswordAuthentication=no $hostname@$ipserv"
 
@@ -133,3 +134,7 @@ echo "Fitxer transferit al remot per capturar informació"
 scp $hostname@$ipserv:/home/$hostname/moongirl.html /home/$usuari/moongirl.html
 
 echo "Fitxer moongirl.html descarregat aquí, el pots trobar a la carpeta de l'usuari (/home/usuari/moongirl.html)"
+
+
+
+
